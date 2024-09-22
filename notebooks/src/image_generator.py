@@ -1,7 +1,7 @@
 import base64
 import io
 import json
-from typing import Optional
+from typing import Any, Optional
 
 import boto3
 from botocore.client import BaseClient
@@ -11,10 +11,28 @@ from PIL import Image
 class ImageGenerator:
     def __init__(self, region: str) -> None:
         self.client = self._init_bedrock_client(region)
-        self.payload: dict = {}
 
     def _init_bedrock_client(self, region: str) -> BaseClient:
         return boto3.client(service_name="bedrock-runtime", region_name="us-west-2")
+
+    def make_payload(self, mode: str, **kwargs: Any) -> dict:
+        if mode == "TEXT_IMAGE":
+            return self.make_text_to_image_payload(**kwargs)
+        else:
+            raise ValueError("mode is not supported")
+
+    def make_text_to_image_payload(
+        self,
+        prompt: str,
+        negative_prompt: str,
+    ) -> dict:
+        return {
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": prompt,
+                "negativeText": negative_prompt,
+            },
+        }
 
     def make_inpaint_payload(
         self,
@@ -23,14 +41,14 @@ class ImageGenerator:
         input_image: str,
         mask_image: Optional[str] = None,
         mask_prompt: Optional[str] = None,
-    ) -> None:
+    ) -> dict:
         if mask_image:
             mask_data = {"maskImage": mask_image}
         elif mask_prompt:
             mask_data = {"maskPrompt": mask_prompt}
         else:
             raise ValueError("Either mask_image or mask_prompt must be provided")
-        self.payload = {
+        return {
             "taskType": "INPAINTING",
             "inPaintingParams": {
                 "text": prompt,
@@ -40,33 +58,20 @@ class ImageGenerator:
             },
         }
 
-    def make_text_to_image_payload(
-        self,
-        prompt: str,
-        negative_prompt: str,
-    ) -> None:
-        self.payload = {
-            "taskType": "TEXT_IMAGE",
-            "textToImageParams": {
-                "text": prompt,
-                "negativeText": negative_prompt,
-            },
-        }
-
     def make_object_removal_payload(
         self,
         negative_prompt: str,
         input_image: str,
         mask_image: Optional[str] = None,
         mask_prompt: Optional[str] = None,
-    ) -> None:
+    ) -> dict:
         if mask_image:
             mask_data = {"maskImage": mask_image}
         elif mask_prompt:
             mask_data = {"maskPrompt": mask_prompt}
         else:
             raise ValueError("Either mask_image or mask_prompt must be provided")
-        self.payload = {
+        return {
             "taskType": "INPAINTING",
             "inPaintingParams": {
                 "negativeText": negative_prompt,
@@ -82,10 +87,10 @@ class ImageGenerator:
         input_image: str,
         control_mode: str,
         control_strength: float = 0.7,
-    ) -> None:
+    ) -> dict:
         if not (control_mode == "CANNY_EDGE" or control_mode == "SEGMENTATION"):
             raise ValueError("control_mode must be either CANNY_EDGE or SEGMENTATION")
-        self.payload = {
+        return {
             "taskType": "TEXT_IMAGE",
             "textToImageParams": {
                 "text": prompt,
@@ -98,6 +103,7 @@ class ImageGenerator:
 
     def generate_image(
         self,
+        payload: dict,
         model_id: str,
         num_image: int = 2,
         cfg_scale: float = 10.0,
@@ -105,7 +111,7 @@ class ImageGenerator:
     ) -> dict:
         body = json.dumps(
             {
-                **self.payload,
+                **payload,
                 "imageGenerationConfig": {
                     "numberOfImages": num_image,  # Range: 1 to 5
                     "quality": "premium",  # Options: standard/premium
