@@ -13,7 +13,7 @@ class ImageGenerator:
         self.client = self._init_bedrock_client(region)
 
     def _init_bedrock_client(self, region: str) -> BaseClient:
-        return boto3.client(service_name="bedrock-runtime", region_name="us-west-2")
+        return boto3.client(service_name="bedrock-runtime", region_name=region)
 
     def make_payload(self, mode: str, **kwargs: Any) -> dict:
         if mode == "TEXT_IMAGE":
@@ -31,6 +31,27 @@ class ImageGenerator:
             "textToImageParams": {
                 "text": prompt,
                 "negativeText": negative_prompt,
+            },
+        }
+
+    def make_image_conditioning_payload(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        input_image: str,
+        control_mode: str,
+        control_strength: float = 0.7,
+    ) -> dict:
+        if not (control_mode == "CANNY_EDGE" or control_mode == "SEGMENTATION"):
+            raise ValueError("control_mode must be either CANNY_EDGE or SEGMENTATION")
+        return {
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": prompt,
+                "negativeText": negative_prompt,
+                "conditionImage": input_image,
+                "controlMode": control_mode,
+                "controlStrength": control_strength,
             },
         }
 
@@ -80,24 +101,84 @@ class ImageGenerator:
             },
         }
 
-    def make_image_conditioning_payload(
+    def make_outpaint_payload(
         self,
         prompt: str,
         negative_prompt: str,
         input_image: str,
-        control_mode: str,
-        control_strength: float = 0.7,
+        mask_image: Optional[str] = None,
+        mask_prompt: Optional[str] = None,
+        outpainting_mode: str = "DEFAULT",
     ) -> dict:
-        if not (control_mode == "CANNY_EDGE" or control_mode == "SEGMENTATION"):
-            raise ValueError("control_mode must be either CANNY_EDGE or SEGMENTATION")
+        if mask_image:
+            mask_data = {"maskImage": mask_image}
+        elif mask_prompt:
+            mask_data = {"maskPrompt": mask_prompt}
+        else:
+            raise ValueError("Either mask_image or mask_prompt must be provided")
         return {
-            "taskType": "TEXT_IMAGE",
-            "textToImageParams": {
+            "taskType": "OUTPAINTING",
+            "outPaintingParams": {
                 "text": prompt,
                 "negativeText": negative_prompt,
-                "conditionImage": input_image,
-                "controlMode": control_mode,
-                "controlStrength": control_strength,
+                "image": input_image,
+                "outPaintingMode": outpainting_mode,  # One of "PRECISE" or "DEFAULT"
+                **mask_data,
+            },
+        }
+
+    def make_variation_payload(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        input_images: list,  # ["base64-encoded string"]
+        similarity_strength: float = 0.7,
+    ) -> dict:
+        return {
+            "taskType": "IMAGE_VARIATION",
+            "imageVariationParams": {
+                "text": prompt,
+                "negativeText": negative_prompt,  # Optional
+                "images": input_images,  # One image is required
+                "similarityStrength": similarity_strength,  # Range: 0.2 to 1.0
+            },
+        }
+
+    def make_color_guide_payload(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        colors: list,  # ["#FFFFFF", "#000000"]
+        reference_image: Optional[str] = None,
+    ) -> dict:
+        if reference_image:
+            return {
+                "taskType": "COLOR_GUIDED_GENERATION",
+                "colorGuidedGenerationParams": {
+                    "text": prompt,
+                    "negativeText": negative_prompt,
+                    "referenceImage": reference_image,
+                    "colors": colors,
+                },
+            }
+        else:
+            return {
+                "taskType": "COLOR_GUIDED_GENERATION",
+                "colorGuidedGenerationParams": {
+                    "text": prompt,
+                    "negativeText": negative_prompt,
+                    "colors": colors,
+                },
+            }
+
+    def make_background_removal_payload(
+        self,
+        input_image: str,
+    ) -> dict:
+        return {
+            "taskType": "BACKGROUND_REMOVAL",
+            "backgroundRemovalParams": {
+                "image": input_image,
             },
         }
 

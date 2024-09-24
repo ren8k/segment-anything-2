@@ -7,35 +7,43 @@ def main() -> None:
     model_id = "amazon.titan-image-generator-v2:0"
     input_image_path = "../images/dogcat.png"
     save_masks_dir = "../masks/dogcat"
-    mask_image_path = f"{save_masks_dir}/mask_1.png"
-    prompt = "A black cat inside a red bucket, background is dim green nature"
-    # prompt = "two dogs walking down an urban street, facing the camera"
+    # mask_image_path = f"{save_masks_dir}/mask_1.png"
+    mask_image_path = f"{save_masks_dir}/mask_dog_rectangle.png"
+    # prompt = "A black cat inside a red bucket, background is dim green nature"
+    # prompt = "A dog riding in a small boat."
+    prompt = "A cute brown puppy and a white cat inside a blue bucket, an orange sunset in the evening"
+    # prompt = "A smiling dog and cat inside a red bucket"
     negative_prompt = "bad quality, low res, noise"
-    mask_prompt = "A white cat"
-    seed = 7  # removeは7が良い．
+    mask_prompt = "A cute brown puppy"
+    seed = 17  # removeは7が良い．
     num_image = 5
 
     img_generator = ImageGenerator(region=region)
     input_image = utils.read_image_as_base64(input_image_path)
+    input_images = [input_image]
     mask_image = utils.read_image_as_base64(mask_image_path)
 
-    # img_generator.make_text_to_image_payload(prompt, negative_prompt)
-
-    payload = img_generator.make_object_removal_payload(
-        negative_prompt, input_image, mask_prompt=mask_prompt
+    # payload = img_generator.make_outpaint_payload(
+    #     prompt=prompt,
+    #     negative_prompt=negative_prompt,
+    #     input_image=input_image,
+    #     # mask_image=mask_image,
+    #     mask_prompt=mask_prompt,
+    #     outpainting_mode="PRECISE",
+    # )
+    # payload = img_generator.make_variation_payload(
+    #     prompt=prompt,
+    #     negative_prompt=negative_prompt,
+    #     input_images=input_images,
+    #     similarity_strength=0.7,
+    # )
+    payload = img_generator.make_color_guide_payload(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        colors=["#FFA500", "#87CEEB"],
+        reference_image=input_image,
     )
-    # img_generator.make_image_conditioning_payload(
-    #     prompt, negative_prompt, input_image, control_mode="SEGMENTATION"
-    # )
-    # img_generator.make_object_removal_payload(
-    #     negative_prompt, input_image, mask_prompt=mask_prompt
-    # )
-    # img_generator.make_inpaint_payload(
-    #     prompt, negative_prompt, input_image, mask_image=mask_image
-    # )
-    # img_generator.make_payload(
-    #     prompt, negative_prompt, input_image, mask_prompt=mask_prompt
-    # )
+    # payload = img_generator.make_background_removal_payload(input_image=input_image)
     response = img_generator.generate_image(
         payload=payload, model_id=model_id, seed=seed, num_image=num_image
     )

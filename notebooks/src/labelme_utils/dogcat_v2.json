@@ -1,0 +1,39 @@
+{
+  "version": "3.16.7",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "dog",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          134.0,
+          70.0
+        ],
+        [
+          626.0,
+          866.0
+        ]
+      ],
+      "shape_type": "rectangle",
+      "flags": {}
+    }
+  ],
+  "lineColor": [
+    0,
+    255,
+    0,
+    128
+  ],
+  "fillColor": [
+    255,
+    0,
+    0,
+    128
+  ],
+  "imagePath": "dogcat.png",
+  "imageData": null,
+  "imageHeight": 1024,
+  "imageWidth": 1024
+}
