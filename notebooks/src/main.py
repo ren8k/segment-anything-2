@@ -37,13 +37,13 @@ def main() -> None:
     #     input_images=input_images,
     #     similarity_strength=0.7,
     # )
-    payload = img_generator.make_color_guide_payload(
-        prompt=prompt,
-        negative_prompt=negative_prompt,
-        colors=["#FFA500", "#87CEEB"],
-        reference_image=input_image,
-    )
-    # payload = img_generator.make_background_removal_payload(input_image=input_image)
+    # payload = img_generator.make_color_guide_payload(
+    #     prompt=prompt,
+    #     negative_prompt=negative_prompt,
+    #     colors=["#FFA500", "#87CEEB"],
+    #     reference_image=input_image,
+    # )
+    payload = img_generator.make_background_removal_payload(input_image=input_image)
     response = img_generator.generate_image(
         payload=payload, model_id=model_id, seed=seed, num_image=num_image
     )
