@@ -6,7 +6,7 @@
 	"workspaceFolder": "/app/sam2", // set your pj name as suffix
 	"workspaceMount": "source=${localWorkspaceFolder},target=/app/sam2,type=bind,consistency=cached", // set your pj name as suffix in target
 	"mounts": [
-		"type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/vscode/.aws",
+		"type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/vscode/.aws",
 	],
 	"initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/init.sh",
 	"postCreateCommand": "bash /app/sam2/.devcontainer/post.sh",
